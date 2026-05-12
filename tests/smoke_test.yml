@@ -1,0 +1,32 @@
+---
+- name: Post-Patch Validation - Smoke Test
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: External Check - Is the Web Server responding?
+      ansible.builtin.uri:
+        url: "http://{{ hostvars['web_server_ip']['ansible_host'] }}"
+        method: GET
+        status_code: 200
+        timeout: 10
+      register: web_check
+      until: web_check.status == 200
+      retries: 5
+      delay: 10
+      delegate_to: localhost
+
+- name: Internal Check - Can App Tier reach the Database?
+  hosts: app_servers
+  become: yes
+  tasks:
+    - name: Check DB Port Availability from App Server
+      ansible.builtin.wait_for:
+        host: "{{ hostvars['db_server_ip']['ansible_host'] }}"
+        port: 5432 # Using PostgreSQL as an example; use 3306 for MySQL or 1433 for SQL Server
+        state: started
+        timeout: 15
+      register: db_connectivity
+
+    - name: Final Status Report
+      ansible.builtin.debug:
+        msg: "Validation Complete. Web is UP and DB is REACHABLE from App Tier."
