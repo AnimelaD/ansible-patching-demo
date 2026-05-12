@@ -1,0 +1,17 @@
+---
+- name: Patch RHEL servers
+  ansible.builtin.dnf:
+    name: "*"
+    state: latest
+  register: patch_result
+
+- name: Check if reboot is required
+  ansible.builtin.command: needs-restarting -r
+  register: reboot_check
+  ignore_errors: true
+  changed_when: false
+
+- name: Reboot the server if required
+  ansible.builtin.reboot:
+    reboot_timeout: 600
+  when: reboot_check.rc == 1

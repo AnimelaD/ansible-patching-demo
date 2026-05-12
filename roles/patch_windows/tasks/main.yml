@@ -1,0 +1,12 @@
+- name: Install Windows Updates with Smart Reboot
+  ansible.windows.win_updates:
+    category_names:
+      - SecurityUpdates
+    reboot: yes
+    reboot_timeout: 1200
+    state: installed
+  register: update_result
+
+- name: Report if a reboot actually happened
+  ansible.builtin.debug:
+    msg: "Windows rebooted: {{ update_result.reboot_required }}"
